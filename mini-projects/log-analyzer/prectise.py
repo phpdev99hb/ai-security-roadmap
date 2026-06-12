@@ -1,31 +1,33 @@
 import re
 
-# Use a dictionary to keep track of event counts for each user
 user_counts = {}
+failed_counts = {}
 
-# Open and process the log file line by line
-with open("mini-projects/log-analyzer/sample.log", "r") as file:
+with open("mini-projects/log-analyzer/sample.log") as file:
+
     for line in file:
-        # Check if the line contains a login attempt (Success or Failed)
-        if "LOGIN_SUCCESS" in line or "LOGIN_FAILED" in line:
-            # Extract the username using regex
-            user_match = re.search(r"user=(\w+)", line)
 
-            if user_match:
-                username = user_match.group(1)
+        user_match = re.search(r"user=(\w+)", line)
 
-                # If the user is already in our dictionary, add 1 to their count
-                # If they are new, start their count at 1
-                if username in user_counts:
-                    user_counts[username] += 1
-                else:
-                    user_counts[username] = 1
+        if not user_match:
+            continue
 
-# Print the total number of unique users (the number of keys in our dictionary)
-print(f"Total Users: {len(user_counts)}\n")
+        username = user_match.group(1)
 
-# Print the event breakdown for each user
+        user_counts[username] = user_counts.get(username, 0) + 1
+
+        if "LOGIN_FAILED" in line:
+
+            failed_counts[username] = failed_counts.get(username, 0) + 1
+
+print("\n=== User Activity ===")
+
 for user, count in user_counts.items():
-    # Simple grammar fix: use "event" for 1, and "events" for 2 or more
-    event_word = "event" if count == 1 else "events"
-    print(f"{user} = {count} {event_word}")
+    print(f"{user}: {count} events")
+
+print("\n=== Suspicious Users ===")
+
+for user, count in failed_counts.items():
+
+    if count >= 3:
+        print(f"⚠️ Possible brute force attack on {user}")
